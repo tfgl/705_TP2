@@ -7,6 +7,11 @@ import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
+import org.apache.xmlrpc.client.XmlRpcClient;
+
+import java.net.URL;
+
 import javax.swing.*;
 
 /**
@@ -18,8 +23,6 @@ import javax.swing.*;
 
 // fenetre qui gere elle meme ses evenements
 public class Calculatrice extends JFrame implements ActionListener {
-	private IMoteurCalcul moteurCalcul;
-
 	// tableau de boutons
 	private JButton[] buttons;
 
@@ -33,13 +36,21 @@ public class Calculatrice extends JFrame implements ActionListener {
 	// pour savoir s'il faut effacer l'ecran ou non
 	boolean estCalcule = false;
 
+    public XmlRpcClient client;
+
 	// constructeur
-	public Calculatrice(IMoteurCalcul moteur_calcul) {
+	public Calculatrice() {
 		// la fenetre a pour titre "Calculatrice"
 		super("Calculatrice");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-		this.moteurCalcul = moteur_calcul;
+        
+        try {
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL("http://localhost:54000"));
+            client = new XmlRpcClient();
+            client.setConfig(config);
+        } catch (Exception e) {
+        }
 
 		setLayout(new BorderLayout());
 		// l'ecran occupe le haut de la fenetre
@@ -82,17 +93,15 @@ public class Calculatrice extends JFrame implements ActionListener {
 		// calcul et affichage de l'expression
 		case '=':
 			try {
-				Double resultat = moteurCalcul.calculer(ecran.getText());
-				// affichage du resultat
-				ecran.setText(resultat.toString());
-				// il faudra effacer l'ecran
-				// lors de la prochaine frappe
-				estCalcule = true;
-			}
-			// cas ou la reponse n'est pas un nombre
-			catch (ExpressionInvalide ex) {
-				JOptionPane.showMessageDialog(this, ex.getMessage());
-				ecran.selectAll();
+                Object[] params = new Object[]{ecran.getText()};
+
+                //Appel de la méthode à distance "calculer"
+                Double resultat = (Double) client.execute("MoteurCalculSimple.calculer", params);
+                //*************************************************************//
+
+                // affichage du resultat
+                ecran.setText(resultat.toString());
+                estCalcule = true;
 			}
 			// plantage du programme
 			catch (Exception ex) {
@@ -115,12 +124,6 @@ public class Calculatrice extends JFrame implements ActionListener {
 	}
 
     public static void main(String[] arg) {
-        try {
-            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
-            config.getServerURL(new URL("http://localhost:54000"));
-            XmlRpcClient client = new XmlRpcClient();
-            client.setConfig(config);
-        } catch (Exception e) {
-        }
+        Calculatrice calc = new Calculatrice();
     }
 }

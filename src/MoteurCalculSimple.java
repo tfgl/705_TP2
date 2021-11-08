@@ -185,7 +185,7 @@ public class MoteurCalculSimple implements IMoteurCalcul {
             XmlRpcServer xmlServer = webServer.getXmlRpcServer();
 
             PropertyHandlerMapping phm = new PropertyHandlerMapping();
-            phm.addHandler("test", MoteurCalculSimple.class );
+            phm.addHandler("MoteurCalculSimple", MoteurCalculSimple.class );
             xmlServer.setHandlerMapping(phm);
             webServer.start();
 
